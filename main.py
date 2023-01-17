@@ -191,7 +191,8 @@ gras_bg = generate_background(pg.image.load(os.path.join('res', 'gras.png')))
 wood_bg = generate_background(pg.image.load(os.path.join('res', 'plank.png')))
 
 schrank_img = pg.image.load(os.path.join('res', 'schrank.png'))
-work_table_img = pg.image.load(os.path.join('res', 'work_table.png'))
+work_table_img = pg.transform.scale(pg.image.load(os.path.join('res', 'work_table.png')), (140, 105))
+bed_img = pg.transform.scale(pg.image.load(os.path.join('res', 'bed.png')), (64 * 1.25, 128 * 1.25))
 
 bg = gras_bg
 
@@ -200,10 +201,11 @@ house_obj = Obj((216 * 1.5, 216 * 1.5), house_imgs[0], width / 2, height / 2 - 5
 house_open_obj = Obj((216 * 1.5, 216 * 1.5), house_imgs[1], width / 2, height / 2 - 50, [0, 0])
 
 schrank_obj = Obj((120, 128), schrank_img, 64, 66, [0, 0, 1])
-work_table_obj = Obj((160, 120), work_table_img, width - 90, 60, [0, 0, 1])
+work_table_obj = Obj((140, 105), work_table_img, 210, 60, [0, 0, 1])
+bed_obj = Obj((64 * 1.25, 128 * 1.25), bed_img, width - 60, 100, [0, 0, 1])
 
-all_sprites = pg.sprite.Group(house_obj, player_obj, schrank_obj, work_table_obj)
-furniture_sprites = pg.sprite.Group(schrank_obj, work_table_obj)
+all_sprites = pg.sprite.Group(house_obj, player_obj, schrank_obj, work_table_obj, bed_obj)
+furniture_sprites = pg.sprite.Group(schrank_obj, work_table_obj, bed_obj)
 drawn_sprites = YAwareGroup(player_obj, house_obj)
 
 
