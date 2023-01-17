@@ -130,8 +130,8 @@ class Player(pg.sprite.Sprite):
         elif current_location == [0, 0, 1]:
             should_move = True
             for sprite in furniture_sprites:
-                if not ((self.rect.right < sprite.rect.left + (right + 5) or self.rect.left > sprite.rect.right - (left + 5)) \
-                    or (self.rect.bottom < sprite.rect.top + bottom + (self.rect.height + 10) or
+                if not ((self.rect.right < sprite.rect.left + (right + 5) or self.rect.left > sprite.rect.right - (left + 5)) 
+                    or (self.rect.bottom < sprite.rect.top + bottom + sprite.rect.height / 1.51 or
                         self.rect.top > sprite.rect.bottom - top - (self.rect.height - 20))):
                     should_move = False
                     break

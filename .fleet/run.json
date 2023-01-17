@@ -1,5 +1,10 @@
 {
-    "configurations": [
-        
-    ]
+	"configurations": [
+		{
+			"name": "Run my script",
+			"type": "python",
+			"file": "main.py",
+			"arguments": []
+		}
+	]
 }
