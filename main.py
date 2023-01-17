@@ -182,6 +182,10 @@ def load_sprite(sprite):
 def remove_sprite(sprite):
     drawn_sprites.remove(sprite)
 
+cursor_arrow_img = pg.image.load(os.path.join('res', 'cursor_arrow.png'))
+cursor_hand_img = pg.image.load(os.path.join('res', 'cursor_hand.png'))
+
+active_cursor_img = cursor_arrow_img
 
 player_sprite_sheet_image = pg.image.load(os.path.join('res', 'dante.png'))
 house_imgs = [pg.transform.scale(pg.image.load(os.path.join('res', 'house.png')), (216 * 1.5, 216 * 1.5)),
@@ -211,6 +215,9 @@ drawn_sprites = YAwareGroup(player_obj, house_obj)
 
 def main():
     global bg, current_location
+
+    pg.mouse.set_visible(False)
+
     running = True
     reset_bg = False
     while running:
@@ -236,6 +243,10 @@ def main():
         all_sprites.update()
         win.blit(bg, (0, 0))
         drawn_sprites.draw(win)
+
+        active_cursor_rect = active_cursor_img.get_rect()
+        active_cursor_rect.topleft = pg.mouse.get_pos()
+        win.blit(active_cursor_img, active_cursor_rect)
 
         pg.display.flip()
 
