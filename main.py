@@ -1,6 +1,7 @@
 import os
 import pygame as pg
 import pygame.transform
+from button import Button, QuitButton
 from YAwareGroup import YAwareGroup
 
 pg.init()
@@ -208,9 +209,16 @@ schrank_obj = Obj((120, 128), schrank_img, 64, 66, [0, 0, 1])
 work_table_obj = Obj((140, 105), work_table_img, 210, 60, [0, 0, 1])
 bed_obj = Obj((64 * 1.25, 128 * 1.25), bed_img, width - 60, 100, [0, 0, 1])
 
+start_but = Button(100, 49 * 2, 0, "Start Game", "start_game")
+select_save_but = Button(100, 49 * 4, 0, "Select Game Save", "select_save")
+options_but = Button(100, 49 * 6, 0, "Options", "options")
+quit_but = QuitButton(100, 49 * 8, 13, "Quit Game", "quit")
+
 all_sprites = pg.sprite.Group(house_obj, player_obj, schrank_obj, work_table_obj, bed_obj)
 furniture_sprites = pg.sprite.Group(schrank_obj, work_table_obj, bed_obj)
 drawn_sprites = YAwareGroup(player_obj, house_obj)
+
+button_sprites = pg.sprite.Group(start_but, select_save_but, options_but, quit_but)
 
 
 def main():
@@ -240,10 +248,16 @@ def main():
             bg = gras_bg
             reset_bg = False
 
+        if quit_but.clicked == True:
+            running = False
+
         all_sprites.update()
         win.blit(bg, (0, 0))
+        button_sprites.update()
         drawn_sprites.draw(win)
+        button_sprites.draw(win)
 
+        # render custom cursor at mouse position
         active_cursor_rect = active_cursor_img.get_rect()
         active_cursor_rect.topleft = pg.mouse.get_pos()
         win.blit(active_cursor_img, active_cursor_rect)
