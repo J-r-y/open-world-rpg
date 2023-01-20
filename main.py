@@ -2,6 +2,7 @@ import os
 import pygame as pg
 from button import Button
 from YAwareGroup import YAwareGroup
+from states.title import Title
 
 
 class Obj(pg.sprite.Sprite):
@@ -114,7 +115,7 @@ class Player(pg.sprite.Sprite):
                 Game.house_collide_x_offset - left) or (self.rect.bottom < Game.house_collide_y_offset + bottom or
                                                         self.rect.top > Game.height - Game.house_collide_y_offset - top) or \
                     (Game.win.get_at(self.rect.topleft) == (0, 0, 0, 255) and Game.win.get_at(self.rect.topright) == (
-                    0, 0, 0, 255)):
+                            0, 0, 0, 255)):
                 self.move(direction, distance)
         elif Game.current_location == [0, 0, 1]:
             should_move = True
@@ -170,6 +171,10 @@ class Game:
 
     current_location = [0, 0]
 
+    state_stack = []
+
+    actions = {"start": False}
+
     house_collide_x_offset = (width - 315) / 2
     house_collide_y_offset = (height - 110) / 2
 
@@ -177,6 +182,7 @@ class Game:
     cursor_hand_img = pg.image.load(os.path.join('res', 'cursor_hand.png'))
 
     active_cursor_img = cursor_arrow_img
+    active_cursor_rect = active_cursor_img.get_rect()
 
     player_obj = Player(32, 32, os.path.join('res', 'dante.png'), width / 2, height - 50)
     house_obj = Obj((216, 216), os.path.join('res', 'house.png'), 1.5, width / 2, height / 2 - 50,
@@ -203,10 +209,7 @@ class Game:
     def __init__(self):
         pg.init()
 
-        self.gras_bg = self.generate_background(pg.image.load(os.path.join('res', 'gras.png')))
-        self.wood_bg = self.generate_background(pg.image.load(os.path.join('res', 'plank.png')))
-
-        self.bg = self.gras_bg
+        self.load_states()
 
     def main(self):
         pg.mouse.set_visible(False)
@@ -223,33 +226,14 @@ class Game:
                 self.running = False
 
     def update(self):
-        self.all_sprites.update()
-        self.button_sprites.update()
 
-        if self.current_location == [0, 0, 1]:
-            self.bg = self.wood_bg
-        if self.current_location == [0, -1, 1]:
-            self.current_location = [0, 0]
-            self.player_obj.rect.centerx = self.width / 2
-            self.player_obj.rect.centery = self.height - 50
-            self.reset_bg = True
-        if self.current_location != [0, 0]:
-            self.reset_bg = True
-        elif self.reset_bg:
-            self.bg = self.gras_bg
-            self.reset_bg = False
-
-        if self.quit_but.clicked:
-            self.running = False
+        self.state_stack[-1].update(self.actions)
 
         # get mouse position and set custom cursor position
-        self.active_cursor_rect = self.active_cursor_img.get_rect()
         self.active_cursor_rect.topleft = pg.mouse.get_pos()
 
     def render(self):
-        self.win.blit(self.bg, (0, 0))
-        self.drawn_sprites.draw(self.win)
-        self.button_sprites.draw(self.win)
+        self.state_stack[-1].render(self.win)
 
         # render custom cursor
         self.win.blit(self.active_cursor_img, self.active_cursor_rect)
@@ -268,6 +252,15 @@ class Game:
 
     def remove_sprite(self, sprite):
         self.drawn_sprites.remove(sprite)
+
+    def load_states(self):
+        self.title_screen = Title(self)
+        self.state_stack.append(self.title_screen)
+
+    def draw_text(self, win, text, size, col, x, y):
+        font = pg.font.Font(os.path.join("res", "fonts", "Oleaguid.ttf"), size)
+        text_surf = font.render(text, True, pg.color.Color(col))
+        win.blit(text_surf, (x - (text_surf.get_width() / 2), y - (text_surf.get_height() / 2)))
 
 
 if __name__ == '__main__':

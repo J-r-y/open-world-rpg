@@ -1,22 +1,24 @@
 import pygame as pg
 import os
 
+
 class Button(pg.sprite.Sprite):
-    def __init__(self, x, y, type, text, function):
+    def __init__(self, x, y, button_type, text):
         super().__init__()
+
+        pg.font.init()
 
         self.x = x
         self.y = y
         self.text = text
         self.clicked = False
-        self.function = function
 
-        self.default_img = pg.transform.scale(pg.image.load(os.path.join('res', 'buttons', f'blue_button{type:02d}.png')), (220, 49))
-        if type == 13:
+        self.default_img = pg.transform.scale(pg.image.load(os.path.join('res', 'buttons', f'blue_button{button_type:02d}.png')), (220, 49))
+        if button_type == 13:
             self.clicked_img = pg.transform.scale(pg.image.load(os.path.join('res', 'buttons', f'blue_button13.png')), (220, 49))
-            self.draw_text("grey20")
+            self.draw_text("black")
         else:
-            self.clicked_img = pg.transform.scale(pg.image.load(os.path.join('res', 'buttons', f'blue_button{type+1:02d}.png')), (220, 49))
+            self.clicked_img = pg.transform.scale(pg.image.load(os.path.join('res', 'buttons', f'blue_button{button_type+1:02d}.png')), (220, 49))
             self.draw_text("white")
         self.image = self.clicked_img
         self.rect = self.image.get_rect()
@@ -41,14 +43,6 @@ class Button(pg.sprite.Sprite):
         self.clicked_img.blit(text_surf, (110 - text_surf.get_rect().width / 2 + 2, 49 / 2 - text_surf.get_rect().height / 2))
 
 
-class QuitButton(Button):
-    def __init__(self, x, y, type, text, function):
-        super().__init__(x, y, type, text, function)
-
-        self.quit = False
-
-    def update(self):
-        super().update()
-
-        if self.clicked:
-            self.quit = True
+class StartGameButton(Button):
+    def __init__(self, x, y, button_type, text):
+        super().__init__(x, y, button_type, text)
