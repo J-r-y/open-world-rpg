@@ -13,23 +13,22 @@ class Title(State):
         self.title_panel_rect.right = self.game.width - 50
         self.title_panel_rect.centery = 75
 
-    def update(self, actions):
+    def update(self):
         self.game.button_sprites.update()
 
         if self.game.quit_but.clicked:
             self.game.running = False
 
         if self.game.start_but.clicked:
-            actions["start"] = True
+            self.game.actions["start_game"] = True
 
-        if actions["start"]:
             new_state = Game_World(self.game)
             new_state.enter_state()
 
-            self.game.actions["start"] = False
+            self.game.actions["start_game"] = False
 
     def render(self, win):
-        win.fill((185, 185, 185))
+        win.fill((125, 125, 125))
 
         win.blit(self.title_panel, self.title_panel_rect)
         self.game.draw_text(win, 'Best RPG', 50, 'grey20', self.game.width - 200, 75)
