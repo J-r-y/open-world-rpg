@@ -1,46 +1,33 @@
 import os
 import pygame as pg
-import pygame.transform
-from button import Button, QuitButton
+from button import Button
 from YAwareGroup import YAwareGroup
-
-pg.init()
-width, height = 960, 540
-win = pg.display.set_mode((width, height))
-pg.display.set_caption('Platformer')
-
-clock = pg.time.Clock()
-
-current_location = [0, 0]
-
-house_collide_x_offset = (width - 315) / 2
-house_collide_y_offset = (height - 110) / 2
 
 
 class Obj(pg.sprite.Sprite):
-    def __init__(self, size, img, x, y, location):
+    def __init__(self, size, img_url, scale, x, y, location):
         pg.sprite.Sprite.__init__(self)
 
-        self.image = pg.Surface(size, pg.SRCALPHA)  # pg.SRCALPHA for transparency
+        self.image = pg.Surface((size[0] * scale, size[1] * scale), pg.SRCALPHA)  # pg.SRCALPHA for transparency
         self.rect = self.image.get_rect()
-        self.image.blit(img, self.rect)
+        self.image.blit(pg.transform.scale_by(pg.image.load(img_url), scale), self.rect)
         self.rect.center = (x, y)
 
         self.location = location
 
     def update(self):
-        if self.location == current_location:
-            if self not in drawn_sprites:
-                load_sprite(self)
-        elif self in drawn_sprites:
-            remove_sprite(self)
+        if self.location == Game.current_location:
+            if self not in Game.drawn_sprites:
+                Game.load_sprite(g, self)
+        elif self in Game.drawn_sprites:
+            Game.remove_sprite(g, self)
 
 
 class Player(pg.sprite.Sprite):
-    def __init__(self, width, height, img, x, y):
+    def __init__(self, width, height, img_url, x, y):
         pg.sprite.Sprite.__init__(self)
 
-        self.sprite_sheet = img
+        self.sprite_sheet = pg.image.load(img_url)
         self.image = self.get_image(self.sprite_sheet, 2, 0, width, height, 2)
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
@@ -61,7 +48,6 @@ class Player(pg.sprite.Sprite):
         self.vel = 5
 
     def update(self):
-        global current_location
         keys = pg.key.get_pressed()
 
         if keys[pg.K_SPACE] and not self.jumping:
@@ -94,46 +80,49 @@ class Player(pg.sprite.Sprite):
                 self.jumping = False
                 self.jump_vel = self.jump_height
 
-        if self.rect.left > width:
+        if self.rect.left > Game.width:
             self.rect.right = 0
-            current_location[0] += 1
+            Game.current_location[0] += 1
         if self.rect.right < 0:
-            self.rect.left = width
-            current_location[0] -= 1
-        if self.rect.top > height:
+            self.rect.left = Game.width
+            Game.current_location[0] -= 1
+        if self.rect.top > Game.height:
             self.rect.bottom = 0
-            current_location[1] -= 1
+            Game.current_location[1] -= 1
         if self.rect.bottom < 0:
-            self.rect.top = height
-            current_location[1] += 1
+            self.rect.top = Game.height
+            Game.current_location[1] += 1
 
-        if current_location == [0, 0]:
-            if -30 < self.rect.centerx - width / 2 < 30:
-                if height / 2 < self.rect.centery < height / 2 + 100:
-                    remove_sprite(house_obj)
-                    load_sprite(house_open_obj)
+        if Game.current_location == [0, 0]:
+            if -30 < self.rect.centerx - Game.width / 2 < 30:
+                if Game.height / 2 < self.rect.centery < Game.height / 2 + 100:
+                    Game.remove_sprite(g, Game.house_obj)
+                    Game.load_sprite(g, Game.house_open_obj)
                     self.reset_house = True
-                if height / 2 < self.rect.centery < height / 2 + 75:
-                    current_location = [0, 0, 1]
-                    remove_sprite(house_open_obj)
+                if Game.height / 2 < self.rect.centery < Game.height / 2 + 75:
+                    Game.current_location = [0, 0, 1]
+                    Game.remove_sprite(g, Game.house_open_obj)
             elif self.reset_house:
-                remove_sprite(house_open_obj)
-                load_sprite(house_obj)
+                Game.remove_sprite(g, Game.house_open_obj)
+                Game.load_sprite(g, Game.house_obj)
                 self.reset_house = False
 
-    def check_move(self, right, left, bottom, top, direction, distance):  # right, left, top, bottom = right offset, left offset etc.
-        if current_location == [0, 0]:
-            if (self.rect.right < house_collide_x_offset + right or self.rect.left > width -
-               house_collide_x_offset - left) or (self.rect.bottom < house_collide_y_offset + bottom or
-               self.rect.top > height - house_collide_y_offset - top) or\
-               (win.get_at(self.rect.topleft) == (0, 0, 0, 255) and win.get_at(self.rect.topright) == (0, 0, 0, 255)):
+    def check_move(self, right, left, bottom, top, direction,
+                   distance):  # right, left, top, bottom = right offset, left offset etc.
+        if Game.current_location == [0, 0]:
+            if (self.rect.right < Game.house_collide_x_offset + right or self.rect.left > Game.width -
+                Game.house_collide_x_offset - left) or (self.rect.bottom < Game.house_collide_y_offset + bottom or
+                                                        self.rect.top > Game.height - Game.house_collide_y_offset - top) or \
+                    (Game.win.get_at(self.rect.topleft) == (0, 0, 0, 255) and Game.win.get_at(self.rect.topright) == (
+                    0, 0, 0, 255)):
                 self.move(direction, distance)
-        elif current_location == [0, 0, 1]:
+        elif Game.current_location == [0, 0, 1]:
             should_move = True
-            for sprite in furniture_sprites:
-                if not ((self.rect.right < sprite.rect.left + (right + 5) or self.rect.left > sprite.rect.right - (left + 5)) 
-                    or (self.rect.bottom < sprite.rect.top + bottom + sprite.rect.height / 1.51 or
-                        self.rect.top > sprite.rect.bottom - top - (self.rect.height - 20))):
+            for sprite in Game.furniture_sprites:
+                if not ((self.rect.right < sprite.rect.left + (right + 5) or self.rect.left > sprite.rect.right - (
+                        left + 5))
+                        or (self.rect.bottom < sprite.rect.top + bottom + sprite.rect.height / 1.51 or
+                            self.rect.top > sprite.rect.bottom - top - (self.rect.height - 20))):
                     should_move = False
                     break
             if should_move:
@@ -150,7 +139,7 @@ class Player(pg.sprite.Sprite):
     def get_image(self, sheet, frame_x, frame_y, w, h, scale):
         image = pg.Surface((w, h), pg.SRCALPHA)
         image.blit(sheet, (0, 0), (frame_x * 48 + 8, frame_y * 48 + 11, w, h))
-        image = pygame.transform.scale(image, (w * scale, h * scale))
+        image = pg.transform.scale(image, (w * scale, h * scale))
 
         return image
 
@@ -170,102 +159,119 @@ class Player(pg.sprite.Sprite):
             self.animation_step_counter = 0
 
 
-def generate_background(bg_img):
-    background = pg.Surface((width, height))
-    for y in range(0, height, bg_img.get_height()):
-        for x in range(0, width, bg_img.get_width()):
-            background.blit(bg_img, (x, y))
-    return background
+class Game:
+    width, height = 960, 540
+    win = pg.display.set_mode((width, height))
+    pg.display.set_caption('RPG')
 
-def load_sprite(sprite):
-    drawn_sprites.add(sprite)
-
-def remove_sprite(sprite):
-    drawn_sprites.remove(sprite)
-
-cursor_arrow_img = pg.image.load(os.path.join('res', 'cursor_arrow.png'))
-cursor_hand_img = pg.image.load(os.path.join('res', 'cursor_hand.png'))
-
-active_cursor_img = cursor_arrow_img
-
-player_sprite_sheet_image = pg.image.load(os.path.join('res', 'dante.png'))
-house_imgs = [pg.transform.scale(pg.image.load(os.path.join('res', 'house.png')), (216 * 1.5, 216 * 1.5)),
-              pg.transform.scale(pg.image.load(os.path.join('res', 'house_open.png')), (216 * 1.5, 216 * 1.5))]
-
-gras_bg = generate_background(pg.image.load(os.path.join('res', 'gras.png')))
-wood_bg = generate_background(pg.image.load(os.path.join('res', 'plank.png')))
-
-schrank_img = pg.image.load(os.path.join('res', 'schrank.png'))
-work_table_img = pg.transform.scale(pg.image.load(os.path.join('res', 'work_table.png')), (140, 105))
-bed_img = pg.transform.scale(pg.image.load(os.path.join('res', 'bed.png')), (64 * 1.25, 128 * 1.25))
-
-bg = gras_bg
-
-player_obj = Player(32, 32, player_sprite_sheet_image, width / 2, height - 50)
-house_obj = Obj((216 * 1.5, 216 * 1.5), house_imgs[0], width / 2, height / 2 - 50, [0, 0])
-house_open_obj = Obj((216 * 1.5, 216 * 1.5), house_imgs[1], width / 2, height / 2 - 50, [0, 0])
-
-schrank_obj = Obj((120, 128), schrank_img, 64, 66, [0, 0, 1])
-work_table_obj = Obj((140, 105), work_table_img, 210, 60, [0, 0, 1])
-bed_obj = Obj((64 * 1.25, 128 * 1.25), bed_img, width - 60, 100, [0, 0, 1])
-
-start_but = Button(100, 49 * 2, 0, "Start Game", "start_game")
-select_save_but = Button(100, 49 * 4, 0, "Select Game Save", "select_save")
-options_but = Button(100, 49 * 6, 0, "Options", "options")
-quit_but = QuitButton(100, 49 * 8, 13, "Quit Game", "quit")
-
-all_sprites = pg.sprite.Group(house_obj, player_obj, schrank_obj, work_table_obj, bed_obj)
-furniture_sprites = pg.sprite.Group(schrank_obj, work_table_obj, bed_obj)
-drawn_sprites = YAwareGroup(player_obj, house_obj)
-
-button_sprites = pg.sprite.Group(start_but, select_save_but, options_but, quit_but)
-
-
-def main():
-    global bg, current_location
-
-    pg.mouse.set_visible(False)
-
+    clock = pg.time.Clock()
     running = True
     reset_bg = False
-    while running:
-        clock.tick(60)
+
+    current_location = [0, 0]
+
+    house_collide_x_offset = (width - 315) / 2
+    house_collide_y_offset = (height - 110) / 2
+
+    cursor_arrow_img = pg.image.load(os.path.join('res', 'cursor_arrow.png'))
+    cursor_hand_img = pg.image.load(os.path.join('res', 'cursor_hand.png'))
+
+    active_cursor_img = cursor_arrow_img
+
+    player_obj = Player(32, 32, os.path.join('res', 'dante.png'), width / 2, height - 50)
+    house_obj = Obj((216, 216), os.path.join('res', 'house.png'), 1.5, width / 2, height / 2 - 50,
+                    [0, 0])
+    house_open_obj = Obj((216, 216), os.path.join('res', 'house_open.png'), 1.5, width / 2,
+                         height / 2 - 50, [0, 0])
+
+    schrank_obj = Obj((120, 128), os.path.join('res', 'schrank.png'), 1, 64, 66, [0, 0, 1])
+    work_table_obj = Obj((160, 120), os.path.join('res', 'work_table.png'), 0.875, 210, 60, [0, 0, 1])
+    bed_obj = Obj((32, 64), os.path.join('res', 'bed.png'), 2.5, width - 60, 100, [0, 0, 1])
+
+    start_but = Button(100, 49 * 2, 0, "Start Game")
+    select_save_but = Button(100, 49 * 4, 0, "Select Game Save")
+    options_but = Button(100, 49 * 6, 0, "Options")
+    quit_but = Button(100, 49 * 8, 13, "Quit Game")
+
+    all_sprites = pg.sprite.Group(house_obj, player_obj, schrank_obj, work_table_obj,
+                                  bed_obj)
+    furniture_sprites = pg.sprite.Group(schrank_obj, work_table_obj, bed_obj)
+    drawn_sprites = YAwareGroup(player_obj, house_obj)
+
+    button_sprites = pg.sprite.Group(start_but, select_save_but, options_but, quit_but)
+
+    def __init__(self):
+        pg.init()
+
+        self.gras_bg = self.generate_background(pg.image.load(os.path.join('res', 'gras.png')))
+        self.wood_bg = self.generate_background(pg.image.load(os.path.join('res', 'plank.png')))
+
+        self.bg = self.gras_bg
+
+    def main(self):
+        pg.mouse.set_visible(False)
+
+        while self.running:
+            self.clock.tick(60)
+            self.get_events()
+            self.update()
+            self.render()
+
+    def get_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                running = False
-            if event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE:
-                running = False
-        if current_location == [0, 0, 1]:
-            bg = wood_bg
-        if current_location == [0, -1, 1]:
-            current_location = [0, 0]
-            player_obj.rect.centerx = width / 2
-            player_obj.rect.centery = height - 50
-            reset_bg = True
-        if current_location != [0, 0]:
-            reset_house = True
-        elif reset_bg:
-            bg = gras_bg
-            reset_bg = False
+                self.running = False
 
-        if quit_but.clicked == True:
-            running = False
+    def update(self):
+        self.all_sprites.update()
+        self.button_sprites.update()
 
-        all_sprites.update()
-        win.blit(bg, (0, 0))
-        button_sprites.update()
-        drawn_sprites.draw(win)
-        button_sprites.draw(win)
+        if self.current_location == [0, 0, 1]:
+            self.bg = self.wood_bg
+        if self.current_location == [0, -1, 1]:
+            self.current_location = [0, 0]
+            self.player_obj.rect.centerx = self.width / 2
+            self.player_obj.rect.centery = self.height - 50
+            self.reset_bg = True
+        if self.current_location != [0, 0]:
+            self.reset_bg = True
+        elif self.reset_bg:
+            self.bg = self.gras_bg
+            self.reset_bg = False
 
-        # render custom cursor at mouse position
-        active_cursor_rect = active_cursor_img.get_rect()
-        active_cursor_rect.topleft = pg.mouse.get_pos()
-        win.blit(active_cursor_img, active_cursor_rect)
+        if self.quit_but.clicked:
+            self.running = False
+
+        # get mouse position and set custom cursor position
+        self.active_cursor_rect = self.active_cursor_img.get_rect()
+        self.active_cursor_rect.topleft = pg.mouse.get_pos()
+
+    def render(self):
+        self.win.blit(self.bg, (0, 0))
+        self.drawn_sprites.draw(self.win)
+        self.button_sprites.draw(self.win)
+
+        # render custom cursor
+        self.win.blit(self.active_cursor_img, self.active_cursor_rect)
 
         pg.display.flip()
 
+    def generate_background(self, bg_img):
+        background = pg.Surface((self.width, self.height))
+        for y in range(0, self.height, bg_img.get_height()):
+            for x in range(0, self.width, bg_img.get_width()):
+                background.blit(bg_img, (x, y))
+        return background
+
+    def load_sprite(self, sprite):
+        self.drawn_sprites.add(sprite)
+
+    def remove_sprite(self, sprite):
+        self.drawn_sprites.remove(sprite)
+
 
 if __name__ == '__main__':
-    main()
+    g = Game()
+    g.main()
     pg.quit()
     quit()
